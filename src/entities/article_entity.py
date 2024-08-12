@@ -10,6 +10,3 @@ class Article:
         self.image_filename = image_filename
         self.search_count = search_count
         self.contains_money = contains_money
-
-    def __str__(self):
-        return f"{self.title} - {self.date}"
