@@ -21,3 +21,6 @@ Planning.txt
 .vscode
 **.pyc
 Planning.txt
+**_venv
+.vscode
+**.pyc
