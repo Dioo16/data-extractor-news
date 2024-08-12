@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
-
+from utils.enums.selenium_locators_enum import Locator, SortBy
 
 
 from utils.values_utils import get_chrome_driver_value, get_news_images_dir_value
@@ -37,7 +37,7 @@ class CustomSelenium:
 
             driver_path = get_chrome_driver_value()
 
-            service = Service(driver_path)
+            service = Service(executable_path=driver_path)
 
             self._driver = webdriver.Chrome(
                 service=service, options=chrome_options)
@@ -70,14 +70,14 @@ class CustomSelenium:
                 overlay_present = len(
                     self.driver.find_elements(
                         By.XPATH,
-                        "//div[contains(@class, 'fancybox-overlay')]")) > 0
+                        Locator.OVERLAY_XPATH.value)) > 0
 
                 if overlay_present:
                     print("overlay apareceu")
                     logging.info("Overlay detected, attempting to close")
                     self.overlay_detected.set()
                     close_button = self.driver.find_element(
-                        By.XPATH, "//a[contains(@class, 'fancybox-close')]")
+                        By.XPATH, Locator.CLOSE_BUTTON_XPATH.value)
                     close_button.click()
                     logging.info("Overlay closed successfully")
                     print("overlay foi fechada")
@@ -162,10 +162,10 @@ class CustomSelenium:
         logging.info("Searching for phrase: %s", phrase)
         try:
             button_open_search = self.driver.find_element(
-                By.XPATH, "//button[@class='SearchOverlay-search-button']")
+                By.XPATH, Locator.SEARCH_BUTTON_XPATH.value)
             button_open_search.click()
             search_input = self.driver.find_element(
-                By.XPATH, '//input[@type="text"]')
+                By.XPATH,  Locator.SEARCH_INPUT_XPATH.value)
             search_input.send_keys(phrase)
             search_input.submit()
         except ImportError as exception:
@@ -176,7 +176,8 @@ class CustomSelenium:
 
     def get_categorys(self) -> dict:
         """
-        Extracts and returns categories from the webpage as a dictionary where keys are category names and values are the corresponding input values.
+        Extracts and returns categories from the webpage 
+        as a dictionary where keys are category names and values are the corresponding input values.
         
         :return: A dictionary of categories.
         """
@@ -184,18 +185,18 @@ class CustomSelenium:
         categories = {}
         try:
             toggle_open_filter = self.driver.find_element(
-                By.XPATH, "//div[@class='SearchFilter-heading']")
+                By.XPATH, Locator.FILTER_TOGGLE_XPATH.value)
             toggle_open_filter.click()
             toggle_open_all_filter = self.driver.find_element(
-                By.XPATH, "//button[@class='SearchFilter-seeAll-button']")
+                By.XPATH, Locator.FILTER_SEE_ALL_BUTTON_XPATH.value)
             toggle_open_all_filter.click()
             filter_items = self.driver.find_elements(
-                By.CSS_SELECTOR, ".SearchFilter-items-item")
+                By.CSS_SELECTOR, Locator.FILTER_ITEMS_CSS_SELECTOR.value)
             for item in filter_items:
                 span_text = item.find_element(
-                    By.CSS_SELECTOR, ".CheckboxInput-label span").text
+                    By.CSS_SELECTOR, Locator.CHECKBOX_INPUT_LABEL_SPAN.value).text
                 input_value = item.find_element(
-                    By.CSS_SELECTOR, "input").get_attribute("value")
+                    By.CSS_SELECTOR, Locator.INPUT.value).get_attribute("value")
                 categories[span_text] = input_value
 
             logging.info("Extracted categories: %s", categories)
@@ -212,16 +213,16 @@ class CustomSelenium:
         logging.info("Going to the next page.")
         try:
             pagination_div = self.driver.find_element(
-                By.CLASS_NAME, "Pagination-nextPage")
-            next_page_link = pagination_div.find_element(By.TAG_NAME, "a")
+                By.CLASS_NAME, Locator.PAGINATION_NEXT_PAGE_CLASS.value)
+            next_page_link = pagination_div.find_element(By.TAG_NAME,  Locator.TAG_A.value)
             next_page_link.click()
             WebDriverWait(
                 self.driver, 10).until(
                 EC.presence_of_element_located(
-                    (By.CLASS_NAME, "SearchResultsModule-results")))
+                    (By.CLASS_NAME, Locator.SEARCH_RESULTS_CLASS.value)))
         except NoSuchElementException as exception:
             logging.error(
-                f"Element not found: {exception}. This may be due to changes in the page structure.")
+                f"Element not found: {exception}. This may be due to changes in the page structure")
 
         except TimeoutException as exception:
             logging.error(
@@ -235,12 +236,19 @@ class CustomSelenium:
 
     @staticmethod
     def is_article_in_range_time(last_article: WebElement, max_date: datetime):
+        """
+        Determines if the article's date is within the specified maximum date range.
+
+        :param last_article: WebElement representing the article.
+        :param max_date: The maximum date to check against.
+        :return: Tuple indicating whether the article's date is within the max_date.
+        """
     
         last_article_date = datetime.fromtimestamp(
             (int(
                 last_article.find_element(
                     By.TAG_NAME,
-                    "bsp-timestamp").get_attribute('data-timestamp'))) /
+                    Locator.TIMESTAMP_TAG_NAME.value).get_attribute(Locator.DATA_TIMESTAMP.value))) /
             1000.0)
 
         return (
@@ -250,6 +258,13 @@ class CustomSelenium:
             max_date.month)
 
     def get_last_articles_in_range_time(self, articles, max_date):
+        """
+        Retrieves the articles within the specified date range.
+
+        :param articles: List of articles to filter.
+        :param max_date: The maximum date to include articles.
+        :return: List of articles within the date range.
+        """
         last_article_in_range = -2
         while True:
             if self.is_article_in_range_time(
@@ -265,10 +280,10 @@ class CustomSelenium:
 
         try:
             toggle_open_filter = self.driver.find_element(
-                By.XPATH, "//div[@class='SearchFilter-heading']")
+                By.XPATH, Locator.FILTER_TOGGLE_XPATH.value)
             toggle_open_filter.click()
             toggle_open_all_filter = self.driver.find_element(
-                By.XPATH, "//button[@class='SearchFilter-seeAll-button']")
+                By.XPATH, Locator.FILTER_SEE_ALL_BUTTON_XPATH.value)
             toggle_open_all_filter.click()
 
             logging.info("Successfully clicked the categories toggle button.")
@@ -281,16 +296,24 @@ class CustomSelenium:
             max_date: datetime,
             categories_value: list,
             has_category: bool) -> WebElement:
+        """
+        Retrieves article elements within a specified date range and category.
+
+        :param max_date: The maximum date to include articles.
+        :param categories_value: List of category values to filter articles by.
+        :param has_category: Boolean indicating if a category filter should be applied.
+        :return: List of WebElements representing articles.
+        """
         logging.info("Extracting articles...")
         validated_articles_element = []
         try:
             sort_by_element = self.driver.find_element(
-                By.XPATH, "//select[@class='Select-input']")
+                By.XPATH, Locator.SORT_BY_XPATH.value)
             sort_by_ui = Select(sort_by_element)
-            sort_by_ui.select_by_visible_text("Newest")
+            sort_by_ui.select_by_visible_text(SortBy.NEWEST.value)
             self.refresh_and_wait_for_body()
             WebDriverWait(self.driver, 10).until(lambda driver: driver.execute_script(
-                'return document.readyState') == 'complete')
+                Locator.ELEMENT_READY_STATE.value) == Locator.COMPLETE.value)
             if has_category:
                 self.open_categories()
                 self.check_categories(categories_values=categories_value)
@@ -365,7 +388,7 @@ class CustomSelenium:
 
             WebDriverWait(self.driver, timeout).until(
                 EC.presence_of_element_located(
-                    (By.CLASS_NAME, "SearchResultsModule-results"))
+                    (By.CLASS_NAME, Locator.SEARCH_RESULTS_CLASS.value))
             )
             logging.info("Body element is fully loaded")
 
@@ -374,20 +397,24 @@ class CustomSelenium:
             raise
 
     def get_article_element(self, timeout=10):
+        """
+        Waits for and retrieves article elements from the page.
+
+        :param timeout: Maximum time to wait for articles to load (in seconds).
+        :return: List of WebElements representing articles.
+        """
         try:
             logging.info("getting article")
             WebDriverWait(
                 self.driver,
                 timeout).until(
                 EC.presence_of_element_located(
-                    (By.XPATH,
-                    "//div[contains(@class, 'SearchResultsModule-results')]//div[contains(@class, 'PageList-items-item') and count(.//div[contains(@class, 'PagePromo')]) > 0 and count(.//div[contains(@class, 'PagePromoTrending')]) = 0]")))
+                    (By.XPATH,Locator.ARTICLE_XPATH.value)))
             articles_scraped = self.driver.find_elements(
-                By.XPATH,
-                "//div[contains(@class, 'SearchResultsModule-results')]//div[contains(@class, 'PageList-items-item') and count(.//div[contains(@class, 'PagePromo')]) > 0 and count(.//div[contains(@class, 'PagePromoTrending')]) = 0]")
+                By.XPATH,Locator.ARTICLE_XPATH.value)
         except Exception as e:
             logging.error(f"Error getting articles: {e}")
-
+            self.driver_quit()
         return articles_scraped
 
     def extract_useful_data_from_articles(self,
@@ -395,6 +422,15 @@ class CustomSelenium:
                                           max_date: datetime,
                                           categories_value: list[str],
                                           is_categorized: bool) -> list[dict]:
+        """
+        Extracts useful data from articles based on specified criteria.
+
+        :param phrase: The search phrase to count occurrences in article content.
+        :param max_date: The maximum publication date for filtering articles.
+        :param categories_value: List of categories to filter articles.
+        :param is_categorized: Boolean indicating whether the articles are categorized.
+        :return: A list of dictionaries containing extracted data from each article.
+        """
         articles_element = self.get_articles_element_on_date(
             max_date=max_date,
             categories_value=categories_value,
@@ -425,25 +461,37 @@ class CustomSelenium:
 
             self.download_picture(formated_articles_data)
         except Exception as e:
-            logging.error(f"Error extracting useful data: {e}")        
+            logging.error(f"Error extracting useful data: {e}")
+        self.driver_quit()        
         return formated_articles_data
 
     def download_picture(self, formated_articles: list[dict]) -> None:
+        """
+        Downloads pictures based on article data and saves them to a directory.
+
+        :param formated_articles: List of dictionaries containing article data including picture URLs.
+        """
         save_directory = get_news_images_dir_value()
         try:
             for formated_article in formated_articles:
                 self.open_site(formated_article["picture_url"])
                 file_name = format_to_allowed_filename(
                     formated_article["image_filename"])
-                self.driver.find_element(By.TAG_NAME, 'img').screenshot(
+                self.driver.find_element(By.TAG_NAME, Locator.IMAGE_TAG_NAME.value).screenshot(
                     f"{save_directory}{file_name}.png")
         except Exception as e:
             logging.error(f"Error downloading images: {e}")
 
 @staticmethod
 def extract_title(element: WebElement) -> str:
+    """
+    Extracts the title from the given article WebElement.
+
+    :param element: The WebElement representing the article.
+    :return: The extracted title as a string.
+    """
     try:
-        title_element = element.find_element(By.CLASS_NAME, "PagePromo-title")
+        title_element = element.find_element(By.CLASS_NAME, Locator.PAGE_PROMO_TITLE_CLASS_NAME.value)
         return title_element.text
     except Exception as e:
         print(f"Error extracting title: {e}")
@@ -452,12 +500,18 @@ def extract_title(element: WebElement) -> str:
 
 @staticmethod
 def extract_date(element: WebElement) -> datetime:
+    """
+    Extracts the publication date from the given article WebElement.
+
+    :param element: The WebElement representing the article.
+    :return: The extracted publication date as a datetime object.
+    """
     try:
         date_article = datetime.fromtimestamp(
             (int(
                 element.find_element(
                     By.TAG_NAME,
-                    "bsp-timestamp").get_attribute('data-timestamp'))) /
+                    Locator.TIMESTAMP_TAG_NAME.value).get_attribute(Locator.DATA_TIMESTAMP.value))) /
             1000.0)
 
         return date_article
@@ -468,9 +522,15 @@ def extract_date(element: WebElement) -> datetime:
 
 @staticmethod
 def extract_description(element: WebElement) -> str:
+    """
+    Extracts the description from the given article WebElement.
+
+    :param element: The WebElement representing the article.
+    :return: The extracted description as a string.
+    """
     try:
         description_element = element.find_element(
-            By.CLASS_NAME, "PagePromo-description")
+            By.CLASS_NAME, Locator.PAGE_PROMO_DESCRIPTION_CLASS_NAME.value)
         return description_element.text
     except Exception as e:
         print(f"Error extracting description: {e}")
@@ -479,12 +539,18 @@ def extract_description(element: WebElement) -> str:
 
 @staticmethod
 def extract_image_filename(element: WebElement) -> str:
+    """
+    Extracts the image filename from the given article WebElement.
+
+    :param element: The WebElement representing the article.
+    :return: The extracted image filename as a string.
+    """
     try:
         div_image_element = element.find_element(
-            By.CLASS_NAME, "PagePromo-media")
+            By.CLASS_NAME, Locator.PAGE_PROMO_MEDIA_CLASS_NAME.value)
         filename = div_image_element.find_element(
-            By.TAG_NAME, "a").get_attribute('aria-label')
-        return filename
+            By.TAG_NAME, Locator.TAG_A.value).get_attribute(Locator.ARIA_LABEL.value)
+        return format_to_allowed_filename(filename)
     except Exception as e:
         print(f"Error extracting image filename: {e}")
         return None
@@ -492,6 +558,13 @@ def extract_image_filename(element: WebElement) -> str:
 
 @staticmethod
 def extract_search_count(element: WebElement, search_phrase: str,) -> int:
+    """
+    Counts occurrences of a search phrase in the article content.
+
+    :param element: The WebElement representing the article.
+    :param search_phrase: The phrase to count in the article content.
+    :return: The count of occurrences of the search phrase.
+    """
     try:
         count_search_phrase = element.text.lower().count(search_phrase.lower())
         return count_search_phrase
@@ -502,6 +575,12 @@ def extract_search_count(element: WebElement, search_phrase: str,) -> int:
 
 @staticmethod
 def extract_contains_money(element: WebElement) -> bool:
+    """
+    Checks if the article contains any monetary values.
+
+    :param element: The WebElement representing the article.
+    :return: True if the article contains monetary values, False otherwise.
+    """
     try:
         text = element.text
         money_patterns = [
@@ -523,11 +602,18 @@ def extract_contains_money(element: WebElement) -> bool:
 
 @staticmethod
 def extract_picture_url(element: WebElement) -> None:
+    """
+    Extracts the URL of the picture from the given article WebElement.
+
+    :param element: The WebElement representing the article.
+    :return: The extracted picture URL as a string.
+    """
     try:
-        div_image_element = element.find_element(By.CLASS_NAME, "PagePromo-media")
-        picture_element = div_image_element.find_element(By.TAG_NAME, "picture")
+        time.sleep(0.5)
+        div_image_element = element.find_element(By.CLASS_NAME, Locator.PAGE_PROMO_MEDIA_CLASS_NAME.value)
+        picture_element = div_image_element.find_element(By.TAG_NAME, Locator.PICTURE_TAG_NAME.value)
         img_url = picture_element.find_element(
-            By.CLASS_NAME, "Image").get_attribute("src")
+            By.CLASS_NAME, Locator.IMAGE_CLASS_NAME.value).get_attribute(Locator.SOURCE.value)
     except Exception as e:
         logging.error(f"Error extracting picture url: {e}")    
     return img_url

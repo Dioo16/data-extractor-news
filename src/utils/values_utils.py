@@ -20,12 +20,12 @@ def get_chrome_driver_value() -> str:
     except ImportError as exception:
         logging.error(exception)
 
-def get_excel_dir_value() -> str:
+def get_output_dir_value() -> str:
     """ Should return csv_dir value from json.values """
     with open('values.json', 'r', encoding="utf-8") as file:
         data = json.load(file)
     try:
-        return data['excel_dir']
+        return data['output_dir']
     except ImportError as exception:
         logging.error(exception)
         

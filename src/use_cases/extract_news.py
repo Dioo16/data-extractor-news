@@ -11,4 +11,5 @@ class ExtractArticle:
     def execute(self):
         articles = self.article_gateway.return_articles()
         search_phrase = self.search_params.phrase
-        self.article_repository.save_articles(articles, search_phrase)
+        month = self.search_params.current_month_plus
+        self.article_repository.save_articles(articles, search_phrase, month)
