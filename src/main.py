@@ -6,17 +6,8 @@ from frameworks_drivers.gateways.article_scraper_gateway import ArticleScraper
 from frameworks_drivers.repositories.article_repository import ArticleRepository
 from use_cases.extract_news import ExtractArticle
 
-def main():
-
-    search_params = {
-        'phrase': 'politics',
-        'category': 'Live Blogs,Sections,Test',
-        'months': 2
-                    }
-
-    params = ParamsGateway(search_params['phrase'], 
-                           search_params['category'], 
-                           search_params['months'])
+def main(phrase: str , category: str ,months: int = 1) -> None:
+    params = ParamsGateway(phrase, category, months)
     
     article_scraping = ArticleScraper(params)
     article_gateway = ArticleGateway(article_scraping)
