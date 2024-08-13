@@ -20,7 +20,7 @@ class ArticleScraper:
         logging.info("Starting Scraping.....")
         browser = CustomSelenium()
         browser.open_site(get_link_with_phrase_searched(self.search_params.phrase))
-        categories_site = browser.get_categorys()
+        categories_site = browser.get_categories()
         categories_value, has_category = get_category_values(categories_site, self.search_params.categories)
         articles_data = browser.extract_useful_data_from_articles(
                              self.search_params.phrase,

@@ -10,7 +10,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementNotInteractableException 
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from utils.enums.selenium_locators_enum import Locator, SortBy
@@ -154,7 +154,7 @@ class CustomSelenium:
                 locator,
                 exception)
 
-    def get_categorys(self) -> dict:
+    def get_categories(self) -> dict:
         """
         Extracts and returns categories from the webpage 
         as a dictionary where keys are category names and values are the corresponding input values.
@@ -185,7 +185,10 @@ class CustomSelenium:
                 "An error occurred while extracting categories: %s", exception)
         except NoSuchElementException as exception:
             logging.warning("Not found categories in site")
-            return categories
+            self.get_categories()
+        except ElementNotInteractableException:
+            self.close_overlay()
+            return 
         return categories
 
     def go_to_next_page(self):
