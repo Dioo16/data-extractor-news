@@ -26,7 +26,6 @@ class CustomSelenium:
 
         try:
             chrome_options = Options()
-            chrome_options.add_argument("--headless")
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument("--disable-extensions")
             chrome_options.add_argument("--disable-gpu")
@@ -181,9 +180,6 @@ class CustomSelenium:
                 "An error occurred while extracting categories: %s", exception)
         except NoSuchElementException as exception:
             logging.warning("Not found categories in site")
-        except ElementNotInteractableException:
-            self.close_overlay()
-            self.get_categories()
         return categories
 
     def go_to_next_page(self):
