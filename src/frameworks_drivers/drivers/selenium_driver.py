@@ -8,6 +8,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementNotInteractableException 
@@ -42,10 +43,7 @@ class CustomSelenium:
                         }
             chrome_options.add_experimental_option("prefs", prefs)
 
-
-            driver_path = get_chrome_driver_value()
-
-            service = Service(executable_path=driver_path)
+            service = Service(ChromeDriverManager().install())
 
             self._driver = webdriver.Chrome(
                 service=service, options=chrome_options)
