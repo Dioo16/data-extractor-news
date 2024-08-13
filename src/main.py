@@ -6,7 +6,14 @@ from frameworks_drivers.gateways.article_scraper_gateway import ArticleScraper
 from frameworks_drivers.repositories.article_repository import ArticleRepository
 from use_cases.extract_news import ExtractArticle
 
-def main(phrase: str , category: str ,months: int = 1) -> None:
+def main(phrase: str = None, category: str = None ,months: int = None) -> None:
+    if phrase is None:
+        phrase = ""
+    if category is None:
+        category = ""
+    if months is None or months < 1:
+        months = 1
+    
     params = ParamsGateway(phrase, category, months)
     
     article_scraping = ArticleScraper(params)
