@@ -30,12 +30,7 @@ class CustomSelenium:
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument("--disable-extensions")
             chrome_options.add_argument("--disable-gpu")
-            chrome_options.add_argument('--disable-web-security')
-            chrome_options.add_argument("--start-maximized")
-            chrome_options.add_argument('--remote-debugging-port=9222')
-            chrome_options.add_experimental_option(
-                "excludeSwitches", ["enable-logging"])
-
+            chrome_options.add_argument("--disable-dev-shm-usage")
             driver_path = get_chrome_driver_value()
 
             service = Service(executable_path=driver_path)
