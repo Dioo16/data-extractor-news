@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 import itertools
 import re
-
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -33,6 +33,14 @@ class CustomSelenium:
             chrome_options.add_argument('--disable-web-security')
             chrome_options.add_argument("--start-maximized")
             chrome_options.add_argument("--disable-dev-shm-usage")
+            prefs = {
+                        "download.default_directory": os.path.abspath(get_news_images_dir_value()),  
+                        "download.prompt_for_download": False,       
+                        "download.directory_upgrade": True,
+                        "safebrowsing.enabled": True
+                        }
+            chrome_options.add_experimental_option("prefs", prefs)
+
 
             driver_path = get_chrome_driver_value()
 
@@ -41,8 +49,7 @@ class CustomSelenium:
             self._driver = webdriver.Chrome(
                 service=service, options=chrome_options)
 
-            self.overlay_event = threading.Event()
-            self.overlay_detected = threading.Event()
+
             thread = threading.Thread(target=self.close_overlay)
             thread.daemon = True
             thread.start()
@@ -74,17 +81,12 @@ class CustomSelenium:
                 if overlay_present:
                     print("overlay apareceu")
                     logging.info("Overlay detected, attempting to close")
-                    self.overlay_detected.set()
                     close_button = self.driver.find_element(
                         By.XPATH, Locator.CLOSE_BUTTON_XPATH.value)
                     close_button.click()
                     logging.info("Overlay closed successfully")
                     print("overlay foi fechada")
 
-                else:
-                    if self.overlay_event.is_set():
-                        self.overlay_detected.clear()  # Clear the detected event
-                        logging.info("Overlay removed, continuing execution")
 
             except Exception as e:
                 logging.info("Overlay not found or other error: %s", e)
@@ -308,7 +310,6 @@ class CustomSelenium:
                 validated_articles_element.append(
                     self.get_last_articles_in_range_time(
                         articles_scraped, max_date))
-            return validated_articles_element
         except Exception:
             logging.error("Error to extract articles")
 
@@ -462,26 +463,37 @@ class CustomSelenium:
 
                 formated_articles_data.append(article_data)
 
-            self.download_picture(formated_articles_data)
+            self.download_pictures(formated_articles_data)
         except Exception as e:
             logging.error(f"Error extracting useful data: {e}")
         self.driver_quit()        
         return formated_articles_data
 
-    def download_picture(self, formated_articles: list[dict]) -> None:
+    def download_pictures(self, formated_articles: list[dict]) -> None:
         """
         Downloads pictures based on article data and saves them to a directory.
 
         :param formated_articles: List of dictionaries containing article data including picture URLs.
         """
-        save_directory = get_news_images_dir_value()
+        
         try:
             for formated_article in formated_articles:
-                self.open_site(formated_article["picture_url"])
-                file_name = format_to_allowed_filename(
-                    formated_article["image_filename"])
-                self.driver.find_element(By.TAG_NAME, Locator.IMAGE_TAG_NAME.value).screenshot(
-                    f"{save_directory}{file_name}.png")
+                image_url =formated_article["picture_url"]
+                self.open_site(image_url)
+                
+                file_name = format_to_allowed_filename(formated_article["image_filename"])
+                self.driver.execute_script(f"""
+                var image = document.querySelector('img');
+                var link = document.createElement('a');
+                link.href = image.src;
+                link.download = '{file_name}';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                """)
+                time.sleep(0.5)
+
+                
         except Exception as e:
             logging.error(f"Error downloading images: {e}")
 

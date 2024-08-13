@@ -2,5 +2,5 @@
     "url_site": "https://apnews.com/",
     "chrome_drive": "src/frameworks_drivers/drivers/chromedriver",
     "output_dir": "output",
-    "news_images_dir": "src\\news_images\\"
+    "news_images_dir": "src/news_images/"
 }
