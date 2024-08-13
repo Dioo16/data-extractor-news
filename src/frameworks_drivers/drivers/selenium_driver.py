@@ -30,6 +30,8 @@ class CustomSelenium:
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument("--disable-extensions")
             chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument('--disable-web-security')
+            chrome_options.add_argument("--start-maximized")
             chrome_options.add_argument("--disable-dev-shm-usage")
             driver_path = get_chrome_driver_value()
 
@@ -148,27 +150,6 @@ class CustomSelenium:
                 text,
                 locator,
                 exception)
-
-    def search_phrase(self, phrase):
-        """
-        Searches for a phrase on the webpage by interacting with the search button and input field.
-
-        :param phrase: The phrase to search for.
-        """
-        logging.info("Searching for phrase: %s", phrase)
-        try:
-            button_open_search = self.driver.find_element(
-                By.XPATH, Locator.SEARCH_BUTTON_XPATH.value)
-            button_open_search.click()
-            search_input = self.driver.find_element(
-                By.XPATH,  Locator.SEARCH_INPUT_XPATH.value)
-            search_input.send_keys(phrase)
-            search_input.submit()
-        except ImportError as exception:
-            logging.error("Error searching for phrase: %s", exception)
-        except NoSuchElementException:
-            logging.error("Overlay found trying again...")
-            self.search_phrase(phrase=phrase)
 
     def get_categorys(self) -> dict:
         """
@@ -408,6 +389,10 @@ class CustomSelenium:
                     (By.XPATH,Locator.ARTICLE_XPATH.value)))
             articles_scraped = self.driver.find_elements(
                 By.XPATH,Locator.ARTICLE_XPATH.value)
+        except NoSuchElementException as e:
+            logging.error(f"No articles were found: stopping application")
+            self.driver_quit()
+            raise
         except Exception as e:
             logging.error(f"Error getting articles: {e}")
             self.driver_quit()

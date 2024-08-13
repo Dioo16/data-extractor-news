@@ -9,7 +9,7 @@ class ExtractArticle:
         self.search_params = search_params
 
     def execute(self):
-        articles = self.article_gateway.return_articles()
         search_phrase = self.search_params.phrase
         month = self.search_params.current_month_plus
+        articles = self.article_gateway.return_articles()
         self.article_repository.save_articles(articles, search_phrase, month)

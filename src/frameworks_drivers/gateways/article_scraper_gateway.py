@@ -19,8 +19,7 @@ class ArticleScraper:
         """Function to scrape data from a news """
         logging.info("Starting Scraping.....")
         browser = CustomSelenium()
-        browser.open_site(get_url_value())
-        browser.search_phrase(self.search_params.phrase)
+        browser.open_site(get_link_with_phrase_searched(self.search_params.phrase))
         categories_site = browser.get_categorys()
         categories_value, has_category = get_category_values(categories_site, self.search_params.categories)
         articles_data = browser.extract_useful_data_from_articles(
@@ -67,3 +66,9 @@ def convert_to_list_articles_entity(articles_data) -> list[Article]:
         
 
     return article_entity_list 
+
+
+def get_link_with_phrase_searched(phrase):
+    if phrase == "":
+        phrase = "..."
+    return f"{get_url_value()}search?q={phrase}#nt=navsearch"
