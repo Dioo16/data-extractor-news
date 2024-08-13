@@ -32,6 +32,8 @@ class CustomSelenium:
             chrome_options.add_argument('--disable-web-security')
             chrome_options.add_argument("--start-maximized")
             chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument('--remote-debugging-port=9222')
+            chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
             prefs = {
                         "download.default_directory": os.path.abspath(get_news_images_dir_value()),  
                         "download.prompt_for_download": False,       
