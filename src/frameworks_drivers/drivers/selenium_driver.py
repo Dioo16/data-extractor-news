@@ -26,7 +26,6 @@ class CustomSelenium:
 
         try:
             chrome_options = Options()
-            chrome_options.add_argument("--headless")
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument("--disable-extensions")
             chrome_options.add_argument("--disable-gpu")
@@ -49,11 +48,6 @@ class CustomSelenium:
             self._driver = webdriver.Chrome(
                 service=service, options=chrome_options)
 
-
-            thread = threading.Thread(target=self.close_overlay)
-            thread.daemon = True
-            thread.start()
-
             logging.info("configuration finished")
 
         except ImportError as exception:
@@ -71,25 +65,24 @@ class CustomSelenium:
         Thread method that continuously checks for and closes overlay elements on the webpage.
         """        
         logging.info("Starting overlay close thread")
-        while True:
-            try:
-                overlay_present = len(
-                    self.driver.find_elements(
-                        By.XPATH,
-                        Locator.OVERLAY_XPATH.value)) > 0
+        try:
+            overlay_present = len(
+                self.driver.find_elements(
+                    By.XPATH,
+                    Locator.OVERLAY_XPATH.value)) > 0
 
-                if overlay_present:
-                    print("overlay apareceu")
-                    logging.info("Overlay detected, attempting to close")
-                    close_button = self.driver.find_element(
-                        By.XPATH, Locator.CLOSE_BUTTON_XPATH.value)
-                    close_button.click()
-                    logging.info("Overlay closed successfully")
-                    print("overlay foi fechada")
+            if overlay_present:
+                print("overlay apareceu")
+                logging.info("Overlay detected, attempting to close")
+                close_button = self.driver.find_element(
+                    By.XPATH, Locator.CLOSE_BUTTON_XPATH.value)
+                close_button.click()
+                logging.info("Overlay closed successfully")
+                print("overlay foi fechada")
 
 
-            except Exception as e:
-                logging.info("Overlay not found or other error: %s", e)
+        except Exception as e:
+            logging.info("Overlay not found or other error: %s", e)
 
     def driver_quit(self):
         """
@@ -185,10 +178,9 @@ class CustomSelenium:
                 "An error occurred while extracting categories: %s", exception)
         except NoSuchElementException as exception:
             logging.warning("Not found categories in site")
-            self.get_categories()
         except ElementNotInteractableException:
             self.close_overlay()
-            return 
+            self.get_categories()
         return categories
 
     def go_to_next_page(self):
