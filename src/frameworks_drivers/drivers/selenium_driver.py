@@ -11,7 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementNotInteractableException 
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException 
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from utils.enums.selenium_locators_enum import Locator, SortBy
@@ -180,6 +180,9 @@ class CustomSelenium:
                 "An error occurred while extracting categories: %s", exception)
         except NoSuchElementException as exception:
             logging.warning("Not found categories in site")
+        except ElementClickInterceptedException:
+            self.close_overlay()
+            self.get_categories()
         return categories
 
     def go_to_next_page(self):
@@ -263,6 +266,9 @@ class CustomSelenium:
             toggle_open_all_filter.click()
 
             logging.info("Successfully clicked the categories toggle button.")
+        except ElementClickInterceptedException:
+            self.close_overlay()
+            self.open_categories()
         except Exception as e:
             logging.error(
                 f"Failed to click the categories toggle button: {str(e)}")
@@ -339,6 +345,9 @@ class CustomSelenium:
         except NoSuchElementException:
             logging.error("Overlay found trying again...")
             self.check_categories(categories_values, timeout=10)
+        except ElementClickInterceptedException:
+            self.close_overlay()
+            self.check_categories(categories_values)
         except ImportError as exception:
             logging.error(
                 "An error occurred while trying to click the checkbox: %s",
