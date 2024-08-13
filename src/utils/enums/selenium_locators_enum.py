@@ -28,6 +28,6 @@ class Locator(Enum):
     COMPLETE = "complete"
     ARIA_LABEL = "aria-label"
     SOURCE = "src"
-    
+    CATEGORIES_XPATH = "//input[@type='checkbox']"
 class SortBy(Enum):
     NEWEST = "Newest"

@@ -51,6 +51,9 @@ def get_category_values(categories_site: dict, categories_param: str) -> Tuple[l
     except AttributeError:
         logging.warning("Categories was not filled")
         return None, False
+    except TypeError:
+        logging.warning("Categories was not filled")
+        return None, False
 
 def convert_to_list_articles_entity(articles_data) -> list[Article]:
     article_entity_list : list[Article] = []
@@ -71,4 +74,4 @@ def convert_to_list_articles_entity(articles_data) -> list[Article]:
 def get_link_with_phrase_searched(phrase):
     if phrase == "":
         phrase = "..."
-    return f"{get_url_value()}search?q={phrase}#nt=navsearch"
+    return f"{get_url_value()}search?q={phrase}&s=0"

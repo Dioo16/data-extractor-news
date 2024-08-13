@@ -26,13 +26,13 @@ class CustomSelenium:
 
         try:
             chrome_options = Options()
-            chrome_options.add_argument("--headless")
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument("--disable-extensions")
             chrome_options.add_argument("--disable-gpu")
             chrome_options.add_argument('--disable-web-security')
             chrome_options.add_argument("--start-maximized")
             chrome_options.add_argument("--disable-dev-shm-usage")
+
             driver_path = get_chrome_driver_value()
 
             service = Service(executable_path=driver_path)
@@ -180,7 +180,9 @@ class CustomSelenium:
         except ImportError as exception:
             logging.error(
                 "An error occurred while extracting categories: %s", exception)
-
+        except NoSuchElementException as exception:
+            logging.warning("Not found categories in site")
+            return categories
         return categories
 
     def go_to_next_page(self):
@@ -288,7 +290,7 @@ class CustomSelenium:
                 By.XPATH, Locator.SORT_BY_XPATH.value)
             sort_by_ui = Select(sort_by_element)
             sort_by_ui.select_by_visible_text(SortBy.NEWEST.value)
-            self.refresh_and_wait_for_body()
+            self.refresh_and_wait_for_sort_results()
             WebDriverWait(self.driver, 10).until(lambda driver: driver.execute_script(
                 Locator.ELEMENT_READY_STATE.value) == Locator.COMPLETE.value)
             if has_category:
@@ -305,12 +307,9 @@ class CustomSelenium:
                 validated_articles_element.append(
                     self.get_last_articles_in_range_time(
                         articles_scraped, max_date))
-
-        except NoSuchElementException:
-            logging.error("Articles werent found: stopping application...")
-            raise
-        except Exception as exception:
-            logging.error("Error to extract articles: %s", exception)
+            return validated_articles_element
+        except Exception:
+            logging.error("Error to extract articles")
 
         return list(itertools.chain(*validated_articles_element))
 
@@ -349,9 +348,9 @@ class CustomSelenium:
                 "An error occurred while trying to click the checkbox: %s",
                 exception)
 
-        self.refresh_and_wait_for_body()
+        self.refresh_and_wait_for_categories()
 
-    def refresh_and_wait_for_body(self, timeout=10):
+    def refresh_and_wait_for_sort_results(self, timeout=5):
         """
         Refreshes the page and waits until the body of the page is fully loaded.
 
@@ -367,10 +366,32 @@ class CustomSelenium:
                 EC.presence_of_element_located(
                     (By.CLASS_NAME, Locator.SEARCH_RESULTS_CLASS.value))
             )
-            logging.info("Body element is fully loaded")
+            logging.info("Page result sorted")
 
         except Exception as e:
-            logging.error(f"Error waiting for the body to load: {e}")
+            logging.error(f"Error to sort page")
+
+        
+    def refresh_and_wait_for_categories(self, timeout=5):
+        """
+        Refreshes the page and waits until the body of the page is fully loaded.
+
+        :param driver: The Selenium WebDriver instance.
+        :param timeout: Maximum time to wait for the body to load (in seconds).
+        """
+        try:
+            # Refresh the page
+            self.driver.refresh()
+            logging.info("Page refreshed")
+
+            WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, Locator.CATEGORIES_XPATH.value))
+            )
+            logging.info("Categories element is fully loaded")
+
+        except Exception:
+            logging.error(f"Error waiting categories: Categories not found, your search is blank")
             raise
 
     def get_article_element(self, timeout=10):
@@ -389,13 +410,13 @@ class CustomSelenium:
                     (By.XPATH,Locator.ARTICLE_XPATH.value)))
             articles_scraped = self.driver.find_elements(
                 By.XPATH,Locator.ARTICLE_XPATH.value)
-        except NoSuchElementException as e:
+        except NoSuchElementException:
             logging.error(f"No articles were found: stopping application")
-            self.driver_quit()
             raise
-        except Exception as e:
-            logging.error(f"Error getting articles: {e}")
-            self.driver_quit()
+        except Exception:
+            logging.error(f"No articles were found: stopping application ")
+            raise
+
         return articles_scraped
 
     def extract_useful_data_from_articles(self,
