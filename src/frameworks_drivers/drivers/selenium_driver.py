@@ -1,4 +1,3 @@
-import threading
 import logging
 import time
 from datetime import datetime
@@ -27,6 +26,7 @@ class CustomSelenium:
 
         try:
             chrome_options = Options()
+            chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument('--headless')
             chrome_options.add_argument("--window-size=1920x1080")
             chrome_options.add_argument("--disable-extensions")
@@ -81,11 +81,12 @@ class CustomSelenium:
                 close_button.click()
                 logging.info("Overlay closed successfully")
                 print("overlay foi fechada")
-
+                return True
 
         except Exception as e:
             logging.info("Overlay not found or other error: %s", e)
-
+        
+        return False
     def driver_quit(self):
         """
         Attempts to quit the WebDriver instance and logs the success or failure of the attempt.
@@ -181,8 +182,9 @@ class CustomSelenium:
         except NoSuchElementException as exception:
             logging.warning("Not found categories in site")
         except ElementClickInterceptedException:
-            self.close_overlay()
-            self.get_categories()
+            is_overlay_present = self.close_overlay()
+            if is_overlay_present:
+                self.get_categories()
         return categories
 
     def go_to_next_page(self):
@@ -267,8 +269,9 @@ class CustomSelenium:
 
             logging.info("Successfully clicked the categories toggle button.")
         except ElementClickInterceptedException:
-            self.close_overlay()
-            self.open_categories()
+            is_overlay_present = self.close_overlay()
+            if is_overlay_present:
+                self.open_categories()
         except Exception as e:
             logging.error(
                 f"Failed to click the categories toggle button: {str(e)}")
@@ -346,8 +349,9 @@ class CustomSelenium:
             logging.error("Overlay found trying again...")
             self.check_categories(categories_values, timeout=10)
         except ElementClickInterceptedException:
-            self.close_overlay()
-            self.check_categories(categories_values)
+            is_overlay_present = self.close_overlay()
+            if is_overlay_present:
+                self.check_categories(categories_values)
         except ImportError as exception:
             logging.error(
                 "An error occurred while trying to click the checkbox: %s",
