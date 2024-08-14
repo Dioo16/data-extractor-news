@@ -195,7 +195,7 @@ class CustomSelenium:
                 self.get_categories()
         return categories
 
-    def go_to_next_page(self):
+    def go_to_next_page(self, timeout=120):
         """
         Navigates to the next page of results and waits for the page to fully load.
         """
@@ -207,12 +207,12 @@ class CustomSelenium:
             next_page_link = pagination_div.find_element(By.TAG_NAME,  Locator.TAG_A.value)
             next_page_link.click()
             WebDriverWait(
-                self.driver, 10).until(
+                self.driver, timeout).until(
                 EC.presence_of_element_located(
                     (By.CLASS_NAME, Locator.SEARCH_RESULTS_CLASS.value)))
         except NoSuchElementException as exception:
             logging.error(
-                f"Element not found: {exception}. This may be due to changes in the page structure")
+                f"Element not found: {exception}. This may be due to don't have a next page")
 
         except TimeoutException as exception:
             logging.error(
@@ -223,6 +223,7 @@ class CustomSelenium:
                 f"An unexpected error occurred: {exception}. Please check the details for more information.")
 
         logging.info("Next page has loaded successfully.")
+        self.close_cookies()
 
     @staticmethod
     def is_article_in_range_time(last_article: WebElement, max_date: datetime):
@@ -338,6 +339,7 @@ class CustomSelenium:
             ", ".join(categories_values))
 
         try:
+            self.close_cookies()
             for value in categories_values:
                 time.sleep(0.5)
                 WebDriverWait(
