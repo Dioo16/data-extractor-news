@@ -481,7 +481,7 @@ class CustomSelenium:
                         "image_filename": extract_image_filename(article_element),
                         "search_count": extract_search_count(article_element, phrase),
                         "contains_money": extract_contains_money(article_element),
-                        "picture_url": extract_picture_url(article_element)
+                        "picture_url": self.extract_picture_url(article_element)
                     }
 
                     formated_articles_data.append(article_data)
