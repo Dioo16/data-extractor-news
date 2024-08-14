@@ -1,7 +1,6 @@
 """ Utils to return values from json.values """
 import json
 import logging
-import os
 
 def get_url_value() -> str:
     """ Should return url value from json.values """
@@ -35,6 +34,6 @@ def get_news_images_dir_value() -> str:
     with open('values.json', 'r', encoding="utf-8") as file:
         data = json.load(file)
     try:
-        return os.path.abspath(data['news_images_dir'])
+        return data['news_images_dir']
     except ImportError as exception:
         logging.error(exception)
