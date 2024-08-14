@@ -138,26 +138,6 @@ class CustomSelenium:
         except ImportError as exception:
             logging.error("Error opening site %s: %s", url, exception)
 
-    def filling_input(self, locator, text):
-        """
-        Fills an input field identified by the CSS locator with the provided text.
-
-        :param locator: The CSS locator of the input field.
-        :param text: The text to input into the field.
-        """
-        logging.info(
-            "Filling input with text '%s' at locator %s", text, locator)
-        try:
-            element = self.driver.find_element(By.CSS_SELECTOR, locator)
-            element.send_keys(text)
-            logging.info(
-                "Input filled with text '%s' at locator %s", text, locator)
-        except ImportError as exception:
-            logging.error(
-                "Error filling input with text '%s' at locator %s: %s",
-                text,
-                locator,
-                exception)
 
     def get_categories(self) -> dict:
         """
@@ -542,6 +522,27 @@ class CustomSelenium:
         except Exception as e:
             logging.error(f"Error downloading images: {e}")
 
+
+  def extract_picture_url(self, element: WebElement, timeout=10) -> None:
+        """
+        Extracts the URL of the picture from the given article WebElement.
+
+        :param element: The WebElement representing the article.
+        :return: The extracted picture URL as a string.
+        """
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, Locator.PAGE_PROMO_MEDIA_CLASS_NAME.value))
+                )
+            div_image_element = element.find_element(By.CLASS_NAME, Locator.PAGE_PROMO_MEDIA_CLASS_NAME.value)
+            picture_element = div_image_element.find_element(By.TAG_NAME, Locator.PICTURE_TAG_NAME.value)
+            img_url = picture_element.find_element(
+                By.CLASS_NAME, Locator.IMAGE_CLASS_NAME.value).get_attribute(Locator.SOURCE.value)
+        except Exception as e:
+            logging.error(f"Error extracting picture url: {e}")    
+        return img_url
+
+
 @staticmethod
 def extract_title(element: WebElement) -> str:
     """
@@ -658,22 +659,3 @@ def extract_contains_money(element: WebElement) -> bool:
     except Exception as e:
         print(f"Error checking for money formats: {e}")
         return False
-
-
-@staticmethod
-def extract_picture_url(element: WebElement) -> None:
-    """
-    Extracts the URL of the picture from the given article WebElement.
-
-    :param element: The WebElement representing the article.
-    :return: The extracted picture URL as a string.
-    """
-    try:
-        time.sleep(0.5)
-        div_image_element = element.find_element(By.CLASS_NAME, Locator.PAGE_PROMO_MEDIA_CLASS_NAME.value)
-        picture_element = div_image_element.find_element(By.TAG_NAME, Locator.PICTURE_TAG_NAME.value)
-        img_url = picture_element.find_element(
-            By.CLASS_NAME, Locator.IMAGE_CLASS_NAME.value).get_attribute(Locator.SOURCE.value)
-    except Exception as e:
-        logging.error(f"Error extracting picture url: {e}")    
-    return img_url
