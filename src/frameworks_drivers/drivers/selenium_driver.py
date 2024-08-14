@@ -86,13 +86,15 @@ class CustomSelenium:
                 return True
 
         except Exception as e:
-            logging.info("Overlay not found or other error: %s", e)
+            logging.error("Overlay not found or other error: %s", e)
         
         return False
 
     def close_cookies(self):
-        self.driver.execute_script("document.querySelector('#onetrust-consent-sdk').style.display = 'none';")
-        
+        try:
+            self.driver.execute_script("document.querySelector('#onetrust-consent-sdk').style.display = 'none';")
+        except Exception:
+            logging.warning("Doenst have any cookie on the page")
 
     def driver_quit(self):
         """
@@ -302,11 +304,7 @@ class CustomSelenium:
         logging.info("Extracting articles...")
         validated_articles_element = []
         try:
-            sort_by_element = self.driver.find_element(
-                By.XPATH, Locator.SORT_BY_XPATH.value)
-            sort_by_ui = Select(sort_by_element)
-            sort_by_ui.select_by_visible_text(SortBy.NEWEST.value)
-            self.refresh_and_wait_for_sort_results()
+            self.sort_by_newest()
             WebDriverWait(self.driver, 10).until(lambda driver: driver.execute_script(
                 Locator.ELEMENT_READY_STATE.value) == Locator.COMPLETE.value)
             if has_category:
@@ -370,6 +368,31 @@ class CustomSelenium:
                 exception)
 
         self.refresh_and_wait_for_categories()
+
+    def sort_by_newest(self):
+        """
+        Sorts the elements on the page by 'Newest' using the sort dropdown.
+
+        This function locates the sorting dropdown element on the page, 
+        selects the 'Newest' option, and then refreshes the page to wait 
+        for the results to be updated.
+
+        Raises:
+            NoSuchElementException: If the sort dropdown is not found on the page.
+            UnexpectedTagNameException: If the located element is not a <select> tag.
+        """
+        logging.info("Attempting to sort items by 'Newest'.")
+        
+        try:
+            sort_by_element = self.driver.find_element(By.XPATH, Locator.SORT_BY_XPATH.value)
+            sort_by_ui = Select(sort_by_element)
+            sort_by_ui.select_by_visible_text(SortBy.NEWEST.value)           
+            self.refresh_and_wait_for_sort_results()
+            logging.info("Page refreshed and waiting for results to be updated.")
+        
+        except Exception as e:
+            logging.error(f"An error occurred while attempting to sort by 'Newest': {e}")
+            raise
 
     def refresh_and_wait_for_sort_results(self, timeout=5):
         """
