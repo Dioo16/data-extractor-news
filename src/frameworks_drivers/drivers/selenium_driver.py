@@ -17,7 +17,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from utils.enums.selenium_locators_enum import Locator, SortBy
 
 
-from utils.values_utils import get_chrome_driver_value, get_news_images_dir_value
+from utils.values_utils import  get_news_images_dir_value
 from utils.strings_utils import format_to_allowed_filename
 
 
@@ -27,12 +27,10 @@ class CustomSelenium:
 
         try:
             chrome_options = Options()
-            chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument('--headless')
             chrome_options.add_argument("--window-size=1920x1080")
             chrome_options.add_argument("--disable-extensions")
             chrome_options.add_argument("--disable-gpu")
-            chrome_options.add_argument('--disable-web-security')
             chrome_options.add_argument("--start-maximized")
             chrome_options.add_argument("--disable-dev-shm-usage")
             chrome_options.add_argument('--remote-debugging-port=9222')
