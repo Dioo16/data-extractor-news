@@ -523,7 +523,7 @@ class CustomSelenium:
             logging.error(f"Error downloading images: {e}")
 
 
-  def extract_picture_url(self, element: WebElement, timeout=10) -> None:
+    def extract_picture_url(self, element: WebElement, timeout=10) -> None:
         """
         Extracts the URL of the picture from the given article WebElement.
 
