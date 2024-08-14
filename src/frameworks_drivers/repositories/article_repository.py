@@ -1,26 +1,29 @@
 from datetime import datetime
+import logging
 from entities.article_entity import Article
 from interfaces.repositories.article_repository_interface import ArticleRepositoryInterface
 import utils.dir_utils
 import utils.values_utils
 import utils.date_utils
+
 from openpyxl import Workbook
 
 class ArticleRepository(ArticleRepositoryInterface):
     def save_articles(self, articles: list[Article], search_phrase: str, month: int) -> None:
         dir = define_output_dir_to_save_excel()
         xlsx_filename  = self.define_xlsx_filename(search_phrase, dir, month)
-        move_images_to_dir_repository(dir)
         wb = Workbook()
         ws = wb.active
         ws.title = "Articles"
 
         ws.append(["Title", "Date", "Description", "Image Filename", "Search Count", "Contains Money"])
-
-        for article in articles:
-            ws.append([article.title, article.date, article.description, 
-                       article.image_filename, article.search_count, article.contains_money])
-        
+        try:
+            for article in articles:
+                ws.append([article.title, article.date, article.description, 
+                            article.image_filename, article.search_count, article.contains_money])
+        except Exception as e:
+            logging.error(f"Error to save article in database: {e}", e)
+            
         wb.save(xlsx_filename)
 
 
@@ -35,6 +38,3 @@ def define_output_dir_to_save_excel():
     dir = utils.values_utils.get_output_dir_value()
     return dir 
 
-def move_images_to_dir_repository(target_dir):
-    src_dir = utils.values_utils.get_news_images_dir_value()
-    utils.dir_utils.move_images_to_repository(target_dir, src_dir)

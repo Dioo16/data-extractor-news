@@ -57,17 +57,21 @@ def get_category_values(categories_site: dict, categories_param: str) -> Tuple[l
 
 def convert_to_list_articles_entity(articles_data) -> list[Article]:
     article_entity_list : list[Article] = []
-    for article_data in articles_data:
-        article_entity_list.append(utils.mappers_utils.map_object_to_article_entity(
-                title= article_data["title"],
-                date= article_data["date"],
-                description= article_data["description"],
-                image_filename= article_data["image_filename"],
-                search_count= article_data["search_count"],
-                contains_money= article_data["contains_money"]
-                ))
+    try:
+        for article_data in articles_data:
+            article_entity_list.append(utils.mappers_utils.map_object_to_article_entity(
+                    title= article_data["title"],
+                    date= article_data["date"],
+                    description= article_data["description"],
+                    image_filename= article_data["image_filename"],
+                    search_count= article_data["search_count"],
+                    contains_money= article_data["contains_money"]
+                    ))
+            
+    except Exception:
+        logging.error("Error to convert to articles entity")
+        return []
         
-
     return article_entity_list 
 
 

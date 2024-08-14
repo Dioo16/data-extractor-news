@@ -16,7 +16,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from utils.enums.selenium_locators_enum import Locator, SortBy
 
 
-from utils.values_utils import  get_news_images_dir_value
+from utils.values_utils import  get_output_dir_value
 from utils.strings_utils import format_to_allowed_filename
 
 
@@ -37,7 +37,7 @@ class CustomSelenium:
             chrome_options.add_argument("--disable-cookies")
             chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
             prefs = {
-                        "download.default_directory": os.path.abspath(get_news_images_dir_value()),  
+                        "download.default_directory": os.path.abspath(get_output_dir_value()),  
                         "download.prompt_for_download": False,       
                         "download.directory_upgrade": True,
                         "safebrowsing.enabled": True
@@ -68,6 +68,7 @@ class CustomSelenium:
         Thread method that continuously checks for and closes overlay elements on the webpage.
         """        
         logging.info("Starting overlay close thread")
+        self.close_cookies()
         try:
             overlay_present = len(
                 self.driver.find_elements(
@@ -199,6 +200,7 @@ class CustomSelenium:
         Navigates to the next page of results and waits for the page to fully load.
         """
         logging.info("Going to the next page.")
+        self.close_cookies()
         try:
             pagination_div = self.driver.find_element(
                 By.CLASS_NAME, Locator.PAGINATION_NEXT_PAGE_CLASS.value)
@@ -322,6 +324,7 @@ class CustomSelenium:
                         articles_scraped, max_date))
         except Exception:
             logging.error("Error to extract articles")
+            return []
 
         return list(itertools.chain(*validated_articles_element))
 
@@ -464,20 +467,23 @@ class CustomSelenium:
 
         formated_articles_data: ExtractArticleDataType = []
         try:
-            for article_element in articles_element:
-                article_data = {
-                    "title": extract_title(article_element),
-                    "date": extract_date(article_element),
-                    "description": extract_description(article_element),
-                    "image_filename": extract_image_filename(article_element),
-                    "search_count": extract_search_count(article_element, phrase),
-                    "contains_money": extract_contains_money(article_element),
-                    "picture_url": extract_picture_url(article_element)
-                }
+            if articles_element:
+                for article_element in articles_element:
+                    article_data = {
+                        "title": extract_title(article_element),
+                        "date": extract_date(article_element),
+                        "description": extract_description(article_element),
+                        "image_filename": extract_image_filename(article_element),
+                        "search_count": extract_search_count(article_element, phrase),
+                        "contains_money": extract_contains_money(article_element),
+                        "picture_url": extract_picture_url(article_element)
+                    }
 
-                formated_articles_data.append(article_data)
+                    formated_articles_data.append(article_data)
 
-            self.download_pictures(formated_articles_data)
+                self.download_pictures(formated_articles_data)
+            else:
+                return []
         except Exception as e:
             logging.error(f"Error extracting useful data: {e}")
         self.driver_quit()        
