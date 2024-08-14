@@ -10,7 +10,7 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException 
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException, ElementNotInteractableException
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from utils.enums.selenium_locators_enum import Locator, SortBy
@@ -188,7 +188,7 @@ class CustomSelenium:
                 "An error occurred while extracting categories: %s", exception)
         except NoSuchElementException as exception:
             logging.warning("Not found categories in site")
-        except ElementClickInterceptedException:
+        except ElementNotInteractableException:
             is_overlay_present = self.close_overlay()
             if is_overlay_present:
                 self.get_categories()
@@ -355,7 +355,7 @@ class CustomSelenium:
         except NoSuchElementException:
             logging.error("Overlay found trying again...")
             self.check_categories(categories_values, timeout=10)
-        except ElementClickInterceptedException:
+        except ElementNotInteractableException:
             is_overlay_present = self.close_overlay()
             if is_overlay_present:
                 self.check_categories(categories_values)
