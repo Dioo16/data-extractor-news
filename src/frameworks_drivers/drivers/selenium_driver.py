@@ -88,6 +88,11 @@ class CustomSelenium:
             logging.info("Overlay not found or other error: %s", e)
         
         return False
+
+    def close_cookies(self):
+        self.driver.execute_script("document.querySelector('#onetrust-consent-sdk').style.display = 'none';")
+        
+
     def driver_quit(self):
         """
         Attempts to quit the WebDriver instance and logs the success or failure of the attempt.
@@ -159,6 +164,7 @@ class CustomSelenium:
         :return: A dictionary of categories.
         """
         logging.info("Extracting categories...")
+        self.close_cookies()
         categories = {}
         try:
             toggle_open_filter = self.driver.find_element(
