@@ -147,9 +147,9 @@ class CustomSelenium:
         :return: A dictionary of categories.
         """
         logging.info("Extracting categories...")
-        self.close_cookies()
         categories = {}
         try:
+            self.close_cookies()
             toggle_open_filter = self.driver.find_element(
                 By.XPATH, Locator.FILTER_TOGGLE_XPATH.value)
             toggle_open_filter.click()
@@ -253,6 +253,7 @@ class CustomSelenium:
         logging.info("Attempting to click the categories toggle button.")
 
         try:
+            self.close_cookies()
             toggle_open_filter = self.driver.find_element(
                 By.XPATH, Locator.FILTER_TOGGLE_XPATH.value)
             toggle_open_filter.click()
