@@ -37,7 +37,7 @@ class CustomSelenium:
             chrome_options.add_argument("--disable-cookies")
             chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
             prefs = {
-                        "download.default_directory": os.path.abspath(get_output_dir_value()),  
+                        "download.default_directory": get_output_dir_value(),  
                         "download.prompt_for_download": False,       
                         "download.directory_upgrade": True,
                         "safebrowsing.enabled": True
