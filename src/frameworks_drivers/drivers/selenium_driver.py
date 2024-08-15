@@ -308,6 +308,7 @@ class CustomSelenium:
         return list(itertools.chain(*validated_articles_element))
 
     def check_categories(self, categories_values: list, timeout=10) -> None:
+        self.close_cookies()
         """
             Clicks on a checkbox based on the 'value' attribute.
             :param value: The 'value' attribute of the checkbox to click.
