@@ -183,16 +183,13 @@ class CustomSelenium:
         """
         logging.info("Going to the next page.")
         self.close_cookies()
-        time.sleep(2)
         try:
             pagination_div = self.driver.find_element(
                 By.CLASS_NAME, Locator.PAGINATION_NEXT_PAGE_CLASS.value)
             next_page_link = pagination_div.find_element(By.TAG_NAME,  Locator.TAG_A.value)
             next_page_link.click()
-            WebDriverWait(
-                self.driver, timeout).until(
-                EC.presence_of_element_located(
-                    (By.CLASS_NAME, Locator.SEARCH_RESULTS_CLASS.value)))
+            time.sleep(5)
+
         except NoSuchElementException as exception:
             logging.error(
                 f"Element not found: {exception}. This may be due to don't have a next page")
