@@ -183,6 +183,7 @@ class CustomSelenium:
         """
         logging.info("Going to the next page.")
         self.close_cookies()
+        time.sleep(2)
         try:
             pagination_div = self.driver.find_element(
                 By.CLASS_NAME, Locator.PAGINATION_NEXT_PAGE_CLASS.value)
