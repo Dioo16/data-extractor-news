@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException, ElementNotInteractableException
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
-from utils.enums.selenium_locators_enum import Locator, SortBy
+from utils.enums.selenium_enum import Locator, SortBy, HttpCode
 
 
 from utils.values_utils import  get_output_dir_value
@@ -27,7 +27,7 @@ class CustomSelenium:
         try:
             chrome_options = Options()
             chrome_options.add_argument('--no-sandbox')
-            chrome_options.add_argument('--headless')
+            #chrome_options.add_argument('--headless')
             chrome_options.add_argument("--window-size=1920x1080")
             chrome_options.add_argument("--disable-extensions")
             chrome_options.add_argument("--disable-gpu")
@@ -35,6 +35,7 @@ class CustomSelenium:
             chrome_options.add_argument("--disable-dev-shm-usage")
             chrome_options.add_argument('--remote-debugging-port=9222')
             chrome_options.add_argument("--disable-cookies")
+            chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
             chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
             prefs = {
                         "download.default_directory": get_output_dir_value(),  
@@ -177,7 +178,7 @@ class CustomSelenium:
                 self.get_categories()
         return categories
 
-    def go_to_next_page(self, timeout=120):
+    def go_to_next_page(self, timeout=20):
         """
         Navigates to the next page of results and waits for the page to fully load.
         """
@@ -188,15 +189,20 @@ class CustomSelenium:
                 By.CLASS_NAME, Locator.PAGINATION_NEXT_PAGE_CLASS.value)
             next_page_link = pagination_div.find_element(By.TAG_NAME,  Locator.TAG_A.value)
             next_page_link.click()
-            time.sleep(5)
-
+            WebDriverWait(
+                self.driver, timeout).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, Locator.SEARCH_RESULTS_CLASS.value)))
         except NoSuchElementException as exception:
             logging.error(
                 f"Element not found: {exception}. This may be due to don't have a next page")
 
-        except TimeoutException as exception:
-            logging.error(
-                f"Timeout while waiting for the page to load: {exception}. The page or element might be taking too long to load.")
+        except TimeoutException:
+            logging.warning(
+                f"Timeout while waiting for the page to load. The page or element might be taking too long to load, veryfing errors...")
+            if self.check_error_404():
+                logging.warning("Error 404 from apnews, the next page doens't exist")
+                return False
 
         except ImportError as exception:
             logging.error(
@@ -204,6 +210,7 @@ class CustomSelenium:
 
         logging.info("Next page has loaded successfully.")
         self.close_cookies()
+        return True
 
     @staticmethod
     def is_article_in_range_time(last_article: WebElement, max_date: datetime):
@@ -267,21 +274,21 @@ class CustomSelenium:
             logging.error(
                 f"Failed to click the categories toggle button: {str(e)}")
 
-    def get_articles_element_on_date(
+    def get_data_from_verified_articles_element(
             self,
             max_date: datetime,
             categories_value: list,
-            has_category: bool) -> WebElement:
+            has_category: bool,
+            phrase: str) -> WebElement:
         """
         Retrieves article elements within a specified date range and category.
 
         :param max_date: The maximum date to include articles.
         :param categories_value: List of category values to filter articles by.
         :param has_category: Boolean indicating if a category filter should be applied.
-        :return: List of WebElements representing articles.
         """
         logging.info("Extracting articles...")
-        validated_articles_element = []
+        validated_data_from_articles = []
         try:
             self.sort_by_newest()
             WebDriverWait(self.driver, 10).until(lambda driver: driver.execute_script(
@@ -289,22 +296,24 @@ class CustomSelenium:
             if has_category:
                 self.open_categories()
                 self.check_categories(categories_values=categories_value)
-            articles_scraped = self.get_article_element()
+            articles_element = self.get_article_element()
             while self.is_article_in_range_time(
-                    articles_scraped[-1], max_date):
-                validated_articles_element.append(articles_scraped)
-                self.go_to_next_page()
-                articles_scraped = self.get_article_element()
-
-            if self.is_article_in_range_time(articles_scraped[0], max_date):
-                validated_articles_element.append(
+                    articles_element[-1], max_date):
+                validated_data_from_articles.append(self.extract_useful_data_from_articles_element(articles_element, phrase))
+                if self.go_to_next_page():
+                    articles_element = self.get_article_element()
+                else:
+                    return list(itertools.chain(*validated_data_from_articles))
+            if self.is_article_in_range_time(articles_element[0], max_date):
+                validated_data_from_articles.append(
+                    self.extract_useful_data_from_articles_element(
                     self.get_last_articles_in_range_time(
-                        articles_scraped, max_date))
+                        articles_element, max_date), phrase ))
         except Exception:
             logging.error("Error to extract articles")
             return []
 
-        return list(itertools.chain(*validated_articles_element))
+        return list(itertools.chain(*validated_data_from_articles))
 
     def check_categories(self, categories_values: list, timeout=10) -> None:
         self.close_cookies()
@@ -443,11 +452,9 @@ class CustomSelenium:
 
         return articles_scraped
 
-    def extract_useful_data_from_articles(self,
-                                          phrase: str,
-                                          max_date: datetime,
-                                          categories_value: list[str],
-                                          is_categorized: bool) -> list[dict]:
+    def extract_useful_data_from_articles_element(self,
+                                          articles_element: list,
+                                          phrase: str) -> list[dict]:
         """
         Extracts useful data from articles based on specified criteria.
 
@@ -457,10 +464,7 @@ class CustomSelenium:
         :param is_categorized: Boolean indicating whether the articles are categorized.
         :return: A list of dictionaries containing extracted data from each article.
         """
-        articles_element = self.get_articles_element_on_date(
-            max_date=max_date,
-            categories_value=categories_value,
-            has_category=is_categorized)
+    
         ExtractArticleDataType = list[
             dict[str, str],
             dict[str, datetime],
@@ -470,7 +474,7 @@ class CustomSelenium:
             dict[str, bool]
         ]
 
-        formated_articles_data: ExtractArticleDataType = []
+        formated_data_articles: ExtractArticleDataType = []
         try:
             if articles_element:
                 for article_element in articles_element:
@@ -484,17 +488,15 @@ class CustomSelenium:
                         "picture_url": self.extract_picture_url(article_element)
                     }
 
-                    formated_articles_data.append(article_data)
-
-                self.download_pictures(formated_articles_data)
+                    formated_data_articles.append(article_data)
             else:
                 return []
         except Exception as e:
             logging.error(f"Error extracting useful data: {e}")
-        self.driver_quit()        
-        return formated_articles_data
+                
+        return formated_data_articles
 
-    def download_pictures(self, formated_articles: list[dict]) -> None:
+    def download_pictures(self, data_articles: list[dict]) -> None:
         """
         Downloads pictures based on article data and saves them to a directory.
 
@@ -502,26 +504,58 @@ class CustomSelenium:
         """
         
         try:
-            for formated_article in formated_articles:
-                image_url =formated_article["picture_url"]
-                self.open_site(image_url)
+            for data_article in data_articles:
+                image_url = data_article["picture_url"]
+                if image_url:
+                    self.open_site(image_url)
+                    file_name = format_to_allowed_filename(data_article["image_filename"])
                 
-                file_name = format_to_allowed_filename(formated_article["image_filename"])
-                self.driver.execute_script(f"""
-                var image = document.querySelector('img');
-                var link = document.createElement('a');
-                link.href = image.src;
-                link.download = '{file_name}';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                """)
+                    self.driver.execute_script(f"""
+                    var image = document.querySelector('img');
+                    var link = document.createElement('a');
+                    link.href = image.src;
+                    link.download = '{file_name}';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    """)
                 time.sleep(0.5)
 
                 
         except Exception as e:
             logging.error(f"Error downloading images: {e}")
 
+    def get_data_from_articles(self,
+                               phrase: str,
+                               max_date: datetime,
+                               categories_value: list[str],
+                               is_categorized: bool) -> list[dict]:
+
+        data_articles = self.get_data_from_verified_articles_element(
+                                            max_date=max_date,
+                                            categories_value=categories_value,
+                                            has_category=is_categorized,
+                                            phrase=phrase)
+
+        self.download_pictures(data_articles)
+
+        self.driver_quit()
+        return data_articles
+        
+
+
+    def check_error_404(self):
+        try:
+            error_element = self.driver.find_element(By.XPATH, "//div[@id='error-information-popup-container']//div[@class='error-code']")
+            obtained_text = error_element.text
+            
+            if obtained_text == HttpCode.HTTP_404.value:
+                return True
+
+            return False
+        
+        except Exception as e:
+            print(f"Element not found or an error occurred: {e}")
 
     def extract_picture_url(self, element: WebElement, timeout=10) -> None:
         """
@@ -538,8 +572,14 @@ class CustomSelenium:
             picture_element = div_image_element.find_element(By.TAG_NAME, Locator.PICTURE_TAG_NAME.value)
             img_url = picture_element.find_element(
                 By.CLASS_NAME, Locator.IMAGE_CLASS_NAME.value).get_attribute(Locator.SOURCE.value)
+        except NoSuchElementException:
+            logging.warning(f"Article without image")
+            return None
+ 
         except Exception as e:
             logging.error(f"Error extracting picture url: {e}")    
+            return None
+        
         return img_url
 
 
@@ -612,6 +652,10 @@ def extract_image_filename(element: WebElement) -> str:
         filename = div_image_element.find_element(
             By.TAG_NAME, Locator.TAG_A.value).get_attribute(Locator.ARIA_LABEL.value)
         return format_to_allowed_filename(filename)
+    except NoSuchElementException:
+        logging.warning("Article without image name")
+        return None
+    
     except Exception as e:
         print(f"Error extracting image filename: {e}")
         return None

@@ -29,5 +29,10 @@ class Locator(Enum):
     ARIA_LABEL = "aria-label"
     SOURCE = "src"
     CATEGORIES_XPATH = "//input[@type='checkbox']"
+    
 class SortBy(Enum):
     NEWEST = "Newest"
+
+
+class HttpCode(Enum):
+    HTTP_404 = "HTTP ERROR 404"

@@ -22,7 +22,7 @@ class ArticleScraper:
         browser.open_site(get_link_with_phrase_searched(self.search_params.phrase))
         categories_site = browser.get_categories()
         categories_value, has_category = get_category_values(categories_site, self.search_params.categories)
-        articles_data = browser.extract_useful_data_from_articles(
+        articles_data = browser.get_data_from_articles(
                              self.search_params.phrase,
                              utils.date_utils.return_current_month_plus_next_months(self.search_params.current_month_plus-1),
                              categories_value,
