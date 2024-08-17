@@ -10,7 +10,7 @@ from openpyxl import Workbook
 
 class ArticleRepository(ArticleRepositoryInterface):
     def save_articles(self, articles: list[Article], search_phrase: str, month: int) -> None:
-        dir = define_output_dir_to_save_excel()
+        dir = define_output_dir()
         xlsx_filename  = self.define_xlsx_filename(search_phrase, dir, month)
         wb = Workbook()
         ws = wb.active
@@ -25,7 +25,12 @@ class ArticleRepository(ArticleRepositoryInterface):
             logging.error(f"Error to save article in database: {e}", e)
             
         wb.save(xlsx_filename)
-
+        
+    def save_articles_images(self) -> None:
+        src_folder_images = utils.values_utils.get_news_images_dir_value()
+        target_zip_folder = define_output_dir()
+        utils.dir_utils.zip_folder(src_folder_images, target_zip_folder)
+        
 
     @staticmethod
     def define_xlsx_filename(phrase_searched: str, dir: str, month: int) -> str:
@@ -34,7 +39,7 @@ class ArticleRepository(ArticleRepositoryInterface):
         return f"{dir}/news_search_{phrase_searched}_{from_date}_to_{to_date}.xlsx"
 
 
-def define_output_dir_to_save_excel():
+def define_output_dir():
     dir = utils.values_utils.get_output_dir_value()
     return dir 
 

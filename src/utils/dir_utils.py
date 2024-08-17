@@ -1,10 +1,12 @@
 import os
 import shutil
 import logging
-def create_new_dir_to_save_excel_and_images(dir, from_date, to_date, phrase):
+import zipfile
+
+def create_new_dir_to_save_images(dir):
     logging.info("Creating new dir to save excel and images from search...")
     try:
-        new_dir_name = f"news_data-searched_{phrase}_{from_date}_to_{to_date}"
+        new_dir_name = "news_images"
 
         new_dir_path = os.path.join(dir, new_dir_name)
 
@@ -36,3 +38,13 @@ def move_images_to_repository(new_dir, src_dir_images):
                         logging.error(f"Error removing news images {e}")
         except Exception as e:
             logging.error(f"Unexpected error: {e}")
+
+def zip_folder(source_folder, target_folder):
+    output_zip = os.path.join(target_folder, "news_images.zip")
+    
+    with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(source_folder):
+            for file in files:
+                full_path = os.path.join(root, file)
+                relative_path = os.path.relpath(full_path, source_folder)
+                zipf.write(full_path, relative_path)

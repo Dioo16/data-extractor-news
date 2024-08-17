@@ -18,7 +18,7 @@ from utils.enums.selenium_enum import Locator, SortBy, HttpCode
 
 from utils.values_utils import  get_output_dir_value
 from utils.strings_utils import format_to_allowed_filename
-
+from utils.dir_utils import create_new_dir_to_save_images
 
 class CustomSelenium:
     def __init__(self):
@@ -38,7 +38,7 @@ class CustomSelenium:
             chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
             chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
             prefs = {
-                        "download.default_directory": get_output_dir_value(),  
+                        "download.default_directory": create_new_dir_to_save_images(get_output_dir_value()),  
                         "download.prompt_for_download": False,       
                         "download.directory_upgrade": True,
                         "safebrowsing.enabled": True

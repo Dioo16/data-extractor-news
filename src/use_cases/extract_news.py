@@ -13,3 +13,4 @@ class ExtractArticle:
         month = self.search_params.current_month_plus
         articles = self.article_gateway.return_articles()
         self.article_repository.save_articles(articles, search_phrase, month)
+        self.article_repository.save_articles_images()
