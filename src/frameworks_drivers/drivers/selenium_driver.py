@@ -178,12 +178,11 @@ class CustomSelenium:
                 self.get_categories()
         return categories
 
-    def go_to_next_page(self, timeout=20):
+    def go_to_next_page(self, timeout=100):
         """
         Navigates to the next page of results and waits for the page to fully load.
         """
         logging.info("Going to the next page.")
-        self.close_cookies()
         try:
             pagination_div = self.driver.find_element(
                 By.CLASS_NAME, Locator.PAGINATION_NEXT_PAGE_CLASS.value)
@@ -221,7 +220,7 @@ class CustomSelenium:
         :param max_date: The maximum date to check against.
         :return: Tuple indicating whether the article's date is within the max_date.
         """
-    
+
         last_article_date = datetime.fromtimestamp(
             (int(
                 last_article.find_element(
@@ -296,12 +295,13 @@ class CustomSelenium:
             if has_category:
                 self.open_categories()
                 self.check_categories(categories_values=categories_value)
-            articles_element = self.get_article_element()
+            articles_element = self.get_articles_element()
             while self.is_article_in_range_time(
                     articles_element[-1], max_date):
                 validated_data_from_articles.append(self.extract_useful_data_from_articles_element(articles_element, phrase))
                 if self.go_to_next_page():
-                    articles_element = self.get_article_element()
+                    time.sleep(1)
+                    articles_element = self.get_articles_element()
                 else:
                     return list(itertools.chain(*validated_data_from_articles))
             if self.is_article_in_range_time(articles_element[0], max_date):
@@ -316,7 +316,6 @@ class CustomSelenium:
         return list(itertools.chain(*validated_data_from_articles))
 
     def check_categories(self, categories_values: list, timeout=10) -> None:
-        self.close_cookies()
         """
             Clicks on a checkbox based on the 'value' attribute.
             :param value: The 'value' attribute of the checkbox to click.
@@ -427,7 +426,7 @@ class CustomSelenium:
             logging.error(f"Error waiting categories: Categories not found, your search is blank")
             raise
 
-    def get_article_element(self, timeout=10):
+    def get_articles_element(self, timeout=10):
         """
         Waits for and retrieves article elements from the page.
 
@@ -556,6 +555,7 @@ class CustomSelenium:
         
         except Exception as e:
             print(f"Element not found or an error occurred: {e}")
+            return False
 
     def extract_picture_url(self, element: WebElement, timeout=10) -> None:
         """
