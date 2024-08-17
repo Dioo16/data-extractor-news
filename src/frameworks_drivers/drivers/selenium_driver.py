@@ -183,7 +183,9 @@ class CustomSelenium:
         Navigates to the next page of results and waits for the page to fully load.
         """
         logging.info("Going to the next page.")
+        
         try:
+            self.close_cookies()
             pagination_div = self.driver.find_element(
                 By.CLASS_NAME, Locator.PAGINATION_NEXT_PAGE_CLASS.value)
             next_page_link = pagination_div.find_element(By.TAG_NAME,  Locator.TAG_A.value)
@@ -208,7 +210,6 @@ class CustomSelenium:
                 f"An unexpected error occurred: {exception}. Please check the details for more information.")
 
         logging.info("Next page has loaded successfully.")
-        self.close_cookies()
         return True
 
     @staticmethod
