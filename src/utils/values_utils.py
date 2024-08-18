@@ -29,7 +29,7 @@ def get_output_dir_value() -> str:
         return  os.path.abspath(data['output_dir'])
     except ImportError as exception:
         logging.error(exception)
-        
+
 def get_news_images_dir_value() -> str:
     """ Should return news_images_dir from json.values """
     with open('values.json', 'r', encoding="utf-8") as file:
