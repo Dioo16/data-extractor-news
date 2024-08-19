@@ -679,6 +679,10 @@ def extract_title(element: WebElement) -> str:
         title_element = element.find_element(
             By.CLASS_NAME, Locator.PAGE_PROMO_TITLE_CLASS_NAME.value)
         return title_element.text
+
+    except NoSuchElementException:
+        logging.warning("Article without tittle")
+        return "Article without tittle"
     except ImportError as e:
         print(f"Error extracting title: {e}")
         return None
@@ -722,6 +726,9 @@ def extract_description(element: WebElement) -> str:
         description_element = element.find_element(
             By.CLASS_NAME, Locator.PAGE_PROMO_DESCRIPTION_CLASS_NAME.value)
         return description_element.text
+    except NoSuchElementException:
+        logging.warning("Article without description")
+        return "Article without description"
     except ImportError as e:
         print(f"Error extracting description: {e}")
         return None
